@@ -56,7 +56,7 @@ const parseDateQuery = (query) => {
 
 
 // =======================
-// الاستعلامات الرئيسية (تمت إعادة كتابتها بالكامل)
+// الاستعلامات الرئيسية
 // =======================
 
 // دالة جديدة (قابلة لإعادة الاستخدام) لجلب "الأبطال" مع معالجة التعادل
@@ -256,9 +256,8 @@ const getActiveStats = async (start, end) => {
     return result[0];
 };
 
-// (جديد) دالة جلب نجوم الدوريات الكبرى
+// دالة جلب نجوم الدوريات الكبرى
 const getLeagueStars = async (start, end) => {
-    // !!! هام: يجب أن تتطابق هذه الأسماء تماماً مع الأسماء في قاعدة بياناتك
     const leagueNames = [
         "الدوري الإسباني",
         "الدوري الإنجليزي",
@@ -270,45 +269,35 @@ const getLeagueStars = async (start, end) => {
     ];
 
     const results = await Prediction.aggregate([
-        // 1. فلترة التوقعات الرابحة خلال الفترة
         { $match: { pointsAwarded: { $gt: 0 }, updatedAt: { $gte: start, $lt: end } } },
-        // 2. جلب بيانات المباراة
         { $lookup: { from: 'matches', localField: 'matchId', foreignField: '_id', as: 'match' } },
         { $unwind: '$match' },
-        // 3. جلب بيانات الدوري
         { $lookup: { from: 'leagues', localField: 'match.leagueId', foreignField: '_id', as: 'league' } },
         { $unwind: '$league' },
-        // 4. الفلترة فقط للدوريات الكبرى
         { $match: { 'league.name': { $in: leagueNames } } },
-        // 5. تجميع النقاط لكل مستخدم *وكل دوري*
         {
             $group: {
                 _id: { userId: '$userId', leagueId: '$league._id', leagueName: '$league.name' },
                 totalPoints: { $sum: '$pointsAwarded' }
             }
         },
-        // 6. (جديد) إيجاد "النجم" (الأعلى نقاط) *داخل كل دوري*
         {
             $setWindowFields: {
-                partitionBy: "$_id.leagueId", // التقسيم حسب الدوري
+                partitionBy: "$_id.leagueId",
                 sortBy: { totalPoints: -1 },
                 output: { maxPointsInLeague: { $max: "$totalPoints" } }
             }
         },
-        // 7. (جديد) جلب كل من يتساوى مع "النجم" في كل دوري
         { $match: { $expr: { $eq: ["$totalPoints", "$maxPointsInLeague"] } } },
-        // 8. جلب بيانات المستخدم
         { $lookup: { from: 'participants', localField: '_id.userId', foreignField: 'userId', as: 'user' } },
         { $unwind: { path: '$user', preserveNullAndEmptyArrays: true } },
         { $match: { 'user.fullName': { $exists: true } } },
-        // 9. تجميع النتائج النهائية
         {
             $group: {
-                _id: '$_id.leagueName', // التجميع حسب اسم الدوري
+                _id: '$_id.leagueName',
                 stars: { $push: { name: '$user.fullName', points: '$totalPoints' } }
             }
         },
-        // 10. إضافة الدوريات التي ليس لها نجم (لضمان 7 نتائج)
         {
             $unionWith: {
                 coll: 'leagues',
@@ -318,7 +307,6 @@ const getLeagueStars = async (start, end) => {
                 ]
             }
         },
-        // 11. أخذ النتيجة الصحيحة (الأولى) لكل دوري
         { $group: { _id: '$_id', stars: { $first: '$stars' } } },
         { $project: { league: '$_id', stars: '$stars', _id: 0 } }
     ]);
@@ -328,7 +316,7 @@ const getLeagueStars = async (start, end) => {
 
 
 // =======================
-// المتحكم الرئيسي (تم تحديثه بالكامل)
+// المتحكم الرئيسي (للبطاقات السابقة)
 // =======================
 
 exports.getAllStats = catchAsync(async (req, res, next) => {
@@ -365,27 +353,20 @@ exports.getAllStats = catchAsync(async (req, res, next) => {
     
     // 4. تجميع الإحصائيات في كائن واحد لإرساله
     const stats = {
-        period: periodLabel, // إرسال الفترة الحالية للواجهة
+        period: periodLabel,
         
-        // --- نجوم الفترة (قائمة) ---
-        starsOfPeriod, // نجم اليوم / الأسبوع (أصبح ديناميكياً)
-        
-        // --- أبطال المباريات الكبرى (قوائم) ---
+        starsOfPeriod,
         bigMatchHuntersByPoints: bigMatchHunterStats.topPoints,
         bigMatchHuntersByCount: bigMatchHunterStats.topCount,
-        
-        // --- إحصائيات أخرى (قوائم) ---
-        highScorers, // أعلى نقاط من مباراة واحدة
+        highScorers,
         longestStreak: consistencyStats.longestStreak,
         mostConsistent: consistencyStats.mostConsistent,
         
-        // --- نجوم الدوريات (كائن) ---
         leagueStars: leagueStars.reduce((acc, item) => {
-            acc[item.league] = item.stars; // تحويل القائمة إلى كائن لسهولة الوصول
+            acc[item.league] = item.stars;
             return acc;
         }, {}),
         
-        // --- إحصائيات رقمية (ثابتة لليوم/الأسبوع) ---
         activeUsersToday: todayStats.activeCount,
         activeUsersWeek: weekStats.activeCount,
         averagePointsToday: todayStats.averagePoints
@@ -394,5 +375,83 @@ exports.getAllStats = catchAsync(async (req, res, next) => {
     res.status(200).json({
         status: 'success',
         data: stats
+    });
+});
+
+// =======================
+// 👇👇👇 الجديد: تقرير المباريات والعباقرة 👇👇👇
+// =======================
+exports.getMatchesStats = catchAsync(async (req, res, next) => {
+    const { date, filter } = req.query; // نستقبل التاريخ والفلتر من الرابط
+
+    // 1. إعداد فلتر التاريخ
+    let matchQuery = {};
+    
+    if (date) {
+        const queryDate = new Date(date);
+        const startOfDay = new Date(queryDate.setHours(0, 0, 0, 0));
+        const endOfDay = new Date(queryDate.setHours(23, 59, 59, 999));
+        matchQuery.matchDateTime = { $gte: startOfDay, $lte: endOfDay };
+    } else if (filter === 'finished') {
+        matchQuery.status = 'Finished';
+    } else if (filter === 'scheduled') {
+        matchQuery.status = 'Scheduled';
+    }
+
+    // 2. جلب المباريات المطلوبة
+    const matches = await Match.find(matchQuery)
+        .populate('teamA', 'name logo')
+        .populate('teamB', 'name logo')
+        .populate('leagueId', 'name')
+        .sort({ matchDateTime: -1 }) // الأحدث أولاً
+        .lean();
+
+    // 3. جلب التوقعات والمشتركين دفعة واحدة (لتحسين الأداء)
+    const matchIds = matches.map(m => m._id);
+    const allPredictions = await Prediction.find({ matchId: { $in: matchIds } }).lean();
+    const allParticipants = await Participant.find().select('userId fullName name').lean();
+
+    // 4. عملية "الطحن" والمقارنة
+    const reportData = matches.map(match => {
+        // أ. تحديد نتيجة المباراة (إذا لم تبدأ نضع "-")
+        const scoreA = (match.scoreA !== undefined && match.scoreA !== null) ? match.scoreA : null;
+        const scoreB = (match.scoreB !== undefined && match.scoreB !== null) ? match.scoreB : null;
+        
+        // ب. البحث عن التوقعات الصحيحة لهذه المباراة
+        let correctPredictorsNames = [];
+        
+        if (scoreA !== null && scoreB !== null) {
+            // نفلتر التوقعات المطابقة للنتيجة
+            const correctPreds = allPredictions.filter(p => 
+                p.matchId.toString() === match._id.toString() &&
+                Number(p.scoreA) === Number(scoreA) &&
+                Number(p.scoreB) === Number(scoreB)
+            );
+
+            // نجلب أسماء أصحاب التوقعات الصحيحة
+            correctPredictorsNames = correctPreds.map(pred => {
+                const participant = allParticipants.find(p => p.userId.toString() === pred.userId.toString());
+                return participant ? (participant.fullName || participant.name) : 'مجهول';
+            });
+        }
+
+        return {
+            id: match._id,
+            league: match.leagueId ? match.leagueId.name : 'غير محدد',
+            time: match.matchDateTime,
+            status: match.status,
+            teamA: match.teamA ? match.teamA.name : 'فريق A',
+            teamB: match.teamB ? match.teamB.name : 'فريق B',
+            resultFormatted: (scoreA !== null) ? `${scoreA} - ${scoreB}` : " - ",
+            winnersCount: correctPredictorsNames.length,
+            winnersList: correctPredictorsNames // قائمة الأسماء
+        };
+    });
+
+    // 5. إرسال النتيجة
+    res.status(200).json({
+        status: 'success',
+        results: reportData.length,
+        data: reportData
     });
 });
