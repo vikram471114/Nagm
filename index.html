@@ -51,24 +51,24 @@
         .custom-table tr:nth-child(even) { background-color: #f9fafb; }
         .custom-table tr:hover { background-color: #f0f9ff; }
 
-        /* تحسين عرض النتيجة */
+        /* تحسين عرض النتيجة (تم التصغير حسب طلبك) */
         .score-display {
             font-family: 'Roboto', sans-serif; /* أرقام إنجليزية */
-            font-size: 1.5rem;
-            font-weight: 800;
-            color: #2563eb; /* أزرق واضح */
-            letter-spacing: 2px;
+            font-size: 1.25rem; /* 20px - أصغر وأرتب */
+            font-weight: 700;   /* سماكة أقل قليلاً */
+            color: #2563eb;     /* أزرق واضح */
+            letter-spacing: 1px;
             white-space: nowrap;
         }
         
         .score-null {
             font-family: 'Roboto', sans-serif;
             color: #9ca3af;
-            font-size: 1.1rem;
+            font-size: 1rem;
             font-weight: 500;
         }
 
-        /* قائمة الفائزين - قابلة للنسخ والتصوير */
+        /* قائمة الفائزين */
         details { width: 100%; }
         details summary { 
             list-style: none; cursor: pointer; outline: none;
@@ -78,28 +78,22 @@
         details summary:hover { color: #14532d; text-decoration: underline; }
         details summary::-webkit-details-marker { display: none; }
         
-        /* الصندوق الذي يظهر عند الفتح */
         .winners-content {
             margin-top: 10px;
-            background-color: #dcfce7; /* أخضر فاتح جداً */
+            background-color: #dcfce7; 
             border: 1px solid #86efac;
             padding: 12px;
             border-radius: 8px;
             color: #14532d;
             font-size: 0.95rem;
             line-height: 1.8;
-            /* هذا يجعل الصندوق جزءاً من الصفحة وليس عائماً، مما يسهل تصويره */
             position: relative; 
             white-space: normal;
         }
 
-        /* أزرار الفلتر */
         .filter-btn.active { background-color: #2563eb; color: white; border-color: #2563eb; }
-        
-        /* التحميل */
         .loader-dots div { animation: loader 0.6s infinite alternate; }
         @keyframes loader { to { opacity: 0.3; transform: scale(0.5); } }
-
     </style>
 </head>
 <body class="min-h-screen flex flex-col">
@@ -225,25 +219,20 @@
                 }
 
                 json.data.forEach(m => {
-                    // 1. معالجة التاريخ (الإنجليزية)
                     const dateObj = new Date(m.time);
-                    const dateStr = dateObj.toLocaleDateString('en-GB'); // DD/MM/YYYY
+                    const dateStr = dateObj.toLocaleDateString('en-GB'); 
                     const timeStr = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
 
-                    // 2. معالجة النتيجة (null - null)
                     const isPlayed = m.resultFormatted.trim() !== "-";
-                    // إذا كانت ملعوبة نعرض النتيجة، إذا لا نعرض null - null كما طلبت
                     const scoreDisplay = isPlayed ? m.resultFormatted : "null - null"; 
                     const scoreClass = isPlayed ? 'score-display' : 'score-null';
 
-                    // 3. معالجة قائمة الفائزين (توسيع الصف)
                     let winnersHtml = '<span class="text-gray-300 text-xs en-text">--</span>';
                     let countBadge = '<span class="bg-gray-100 text-gray-400 px-2 py-1 rounded text-xs font-bold en-text">0</span>';
 
                     if (isPlayed) {
                         if (m.winnersCount > 0) {
                             countBadge = `<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold en-text border border-green-200 shadow-sm">${m.winnersCount}</span>`;
-                            
                             winnersHtml = `
                                 <details>
                                     <summary>👥 عرض الأسماء</summary>
@@ -259,16 +248,16 @@
                         }
                     }
 
+                    // 🛑 التعديل هنا: تم عكس أماكن الفرق (B يمين - A يسار)
+                    // بما أن الصفحة RTL، العنصر الأول يظهر يمين
                     const row = `
                         <tr class="transition duration-150">
                             <td class="font-bold text-gray-500 text-xs">${m.league}</td>
                             
                             <td>
                                 <div class="flex items-center gap-3 font-bold text-gray-800 text-base">
-                                    <span class="text-right w-1/2">${m.teamA}</span>
-                                    <span class="text-gray-300 text-xs">VS</span>
-                                    <span class="text-left w-1/2">${m.teamB}</span>
-                                </div>
+                                    <span class="text-right w-1/2">${m.teamB}</span> <span class="text-gray-300 text-xs">VS</span>
+                                    <span class="text-left w-1/2">${m.teamA}</span> </div>
                             </td>
                             
                             <td class="text-center">
@@ -319,7 +308,6 @@
             fetchGeneralStats();
             fetchMatches();
 
-            // أزرار الفلترة
             const btns = document.querySelectorAll('.filter-btn');
             btns.forEach(btn => {
                 btn.addEventListener('click', (e) => {
@@ -335,9 +323,7 @@
                     document.getElementById('start-date').value = '';
                     document.getElementById('end-date').value = '';
                     
-                    // إذا اليوم، نرسل الباراميترات
                     if(isToday) {
-                        // نحصل على تاريخ اليوم بصيغة YYYY-MM-DD
                         const today = new Date().toISOString().split('T')[0];
                         currentState.startDate = today;
                         currentState.endDate = today;
