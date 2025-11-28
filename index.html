@@ -12,28 +12,24 @@
             theme: {
                 extend: {
                     fontFamily: {
-                        // نجعل Cairo هو الخط الأساسي، وإذا فشل نستخدم Tahoma
-                        sans: ['Cairo', 'Tahoma', 'Arial', 'sans-serif'],
-                        // خط للأرقام الإنجليزية
-                        nums: ['Roboto', 'sans-serif'],
+                        sans: ['Cairo', 'sans-serif'],
                     },
                 },
             },
         }
     </script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@400;500;600;700&family=Roboto:wght@500;700&display=swap" rel="stylesheet">
 
     <style>
-        /* استيراد الخطوط مباشرة في CSS لضمان التحميل */
-        @import url('https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&family=Roboto:wght@500;700&display=swap');
-
-        /* إجبار المتصفح على استخدام الخطوط */
         body {
-            font-family: 'Cairo', 'Tahoma', 'Arial', sans-serif !important;
             background-color: #f3f4f6;
             color: #1f2937;
         }
         
-        /* كلاس خاص للأرقام الإنجليزية */
+        /* تنسيق الأرقام الإنجليزية */
         .en-text {
             font-family: 'Roboto', sans-serif !important;
             direction: ltr;
@@ -47,40 +43,46 @@
             position: sticky; top: 0; z-index: 50;
         }
 
-        /* تنسيق الجدول */
+        /* تنسيقات الجدول */
         .custom-table th { 
             background-color: #1e293b; color: #fff; font-weight: 600; 
-            padding: 16px; font-size: 0.9rem; white-space: nowrap;
+            padding: 14px; font-size: 0.85rem; white-space: nowrap;
         }
         .custom-table td { 
-            padding: 12px 16px; border-bottom: 1px solid #e5e7eb; vertical-align: middle; font-size: 0.95rem; font-weight: 400; color: #374151; 
+            padding: 10px 14px; border-bottom: 1px solid #e5e7eb; 
+            vertical-align: middle;
+            font-size: 0.9rem; /* تصغير الخط قليلاً */
         }
         .custom-table tr:nth-child(even) { background-color: #f9fafb; }
         .custom-table tr:hover { background-color: #f0f9ff; }
 
         /* تنسيق النتيجة */
         .score-display {
-            font-family: 'Roboto', sans-serif !important; 
-            font-size: 1.25rem; font-weight: 700;
-            color: #2563eb; letter-spacing: 1px; white-space: nowrap;
+            font-family: 'Roboto', sans-serif; 
+            font-size: 1.1rem; /* تصغير النتيجة قليلاً لتتناسق */
+            font-weight: 700;
+            color: #2563eb; 
+            letter-spacing: 1px; 
+            white-space: nowrap;
         }
         .score-null { 
-            font-family: 'Roboto', sans-serif !important; 
-            color: #9ca3af; font-size: 1rem; font-weight: 500; 
+            font-family: 'Roboto', sans-serif; 
+            color: #9ca3af; font-size: 0.9rem; font-weight: 500; 
         }
 
         /* القائمة المنسدلة */
         details { width: 100%; }
         details summary { 
-            list-style: none; cursor: pointer; outline: none; color: #166534; font-weight: 700; transition: color 0.2s;
+            list-style: none; cursor: pointer; outline: none; color: #166534; 
+            font-weight: 600; transition: color 0.2s; font-size: 0.85rem;
         }
         details summary:hover { color: #14532d; text-decoration: underline; }
         details summary::-webkit-details-marker { display: none; }
         
         .winners-content {
-            margin-top: 10px; background-color: #dcfce7; border: 1px solid #86efac;
-            padding: 12px; border-radius: 8px; color: #14532d; font-size: 0.95rem;
-            line-height: 1.8; position: relative; white-space: normal;
+            margin-top: 8px; background-color: #dcfce7; border: 1px solid #86efac;
+            padding: 10px; border-radius: 6px; color: #14532d; font-size: 0.85rem;
+            line-height: 1.6; position: relative; white-space: normal;
         }
 
         .filter-btn.active { background-color: #2563eb; color: white; border-color: #2563eb; }
@@ -88,39 +90,39 @@
         @keyframes loader { to { opacity: 0.3; transform: scale(0.5); } }
     </style>
 </head>
-<body class="min-h-screen flex flex-col font-sans">
+<body class="min-h-screen flex flex-col">
 
     <header class="glass-header shadow-sm">
         <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
             <div class="flex items-center gap-2">
                 <span class="text-3xl">⚽</span>
-                <h1 class="text-2xl font-bold text-gray-800">نتائج المباريات</h1>
+                <h1 class="text-xl font-bold text-gray-800">نتائج المباريات</h1>
             </div>
             
             <div class="flex flex-wrap items-center gap-3 bg-white p-2 rounded-lg border shadow-sm">
-                <button id="week-btn" class="filter-btn active px-5 py-2 rounded-md font-bold text-gray-600 hover:bg-gray-100 transition">الأسبوع</button>
-                <button id="today-btn" class="filter-btn px-5 py-2 rounded-md font-bold text-gray-600 hover:bg-gray-100 transition">اليوم</button>
-                <div class="w-px h-8 bg-gray-300 mx-1"></div>
+                <button id="week-btn" class="filter-btn active px-4 py-1.5 rounded-md font-medium text-sm text-gray-600 hover:bg-gray-100 transition">الأسبوع</button>
+                <button id="today-btn" class="filter-btn px-4 py-1.5 rounded-md font-medium text-sm text-gray-600 hover:bg-gray-100 transition">اليوم</button>
+                <div class="w-px h-6 bg-gray-300 mx-1"></div>
                 
                 <div class="flex items-center gap-2">
-                    <input type="date" id="start-date" class="en-text border rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500">
-                    <span class="font-bold text-gray-400">-</span>
-                    <input type="date" id="end-date" class="en-text border rounded px-2 py-1.5 text-sm focus:ring-2 focus:ring-blue-500">
-                    <button id="filter-btn" class="bg-gray-800 text-white px-4 py-2 rounded hover:bg-gray-700 transition font-bold">بحث</button>
+                    <input type="date" id="start-date" class="en-text border rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500">
+                    <span class="font-bold text-gray-400 text-sm">-</span>
+                    <input type="date" id="end-date" class="en-text border rounded px-2 py-1 text-sm focus:ring-2 focus:ring-blue-500">
+                    <button id="filter-btn" class="bg-gray-800 text-white px-3 py-1.5 rounded hover:bg-gray-700 transition font-medium text-sm">بحث</button>
                 </div>
             </div>
         </div>
     </header>
 
-    <main class="max-w-[98%] mx-auto py-8">
+    <main class="max-w-[98%] mx-auto py-6">
 
-        <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden mt-4">
+        <div class="bg-white rounded-lg shadow-md border border-gray-200 overflow-hidden mt-2">
             <div class="overflow-x-auto">
                 <table class="w-full text-right custom-table">
                     <thead>
                         <tr>
-                            <th class="w-2/12">البطولة</th>
-                            <th class="w-4/12">المباراة</th>
+                            <th class="w-1/12">البطولة</th>
+                            <th class="w-5/12">المباراة</th>
                             <th class="w-1/12 text-center">النتيجة</th>
                             <th class="w-1/12 text-center">العدد الصحيح</th>
                             <th class="w-3/12">قائمة المتوقعين (الفائزين)</th>
@@ -128,22 +130,21 @@
                         </tr>
                     </thead>
                     <tbody id="matches-table-body">
-                        <tr><td colspan="6" class="p-10 text-center text-gray-500">جاري التحميل...</td></tr>
+                        <tr><td colspan="6" class="p-8 text-center text-gray-500 text-sm">جاري التحميل...</td></tr>
                     </tbody>
                 </table>
             </div>
             
-            <div class="bg-gray-50 px-6 py-4 border-t border-gray-200 flex justify-between items-center">
-                <button id="prev-btn" onclick="changePage(-1)" disabled class="px-4 py-2 bg-white border rounded hover:bg-gray-100 disabled:opacity-50">← السابق</button>
-                <span class="font-bold text-gray-600 text-sm">صفحة <span id="current-page" class="en-text">1</span> من <span id="total-pages" class="en-text">--</span></span>
-                <button id="next-btn" onclick="changePage(1)" disabled class="px-4 py-2 bg-white border rounded hover:bg-gray-100 disabled:opacity-50">التالي →</button>
+            <div class="bg-gray-50 px-6 py-3 border-t border-gray-200 flex justify-between items-center">
+                <button id="prev-btn" onclick="changePage(-1)" disabled class="px-3 py-1.5 bg-white border rounded text-sm hover:bg-gray-100 disabled:opacity-50">← السابق</button>
+                <span class="font-medium text-gray-600 text-sm">صفحة <span id="current-page" class="en-text">1</span> من <span id="total-pages" class="en-text">--</span></span>
+                <button id="next-btn" onclick="changePage(1)" disabled class="px-3 py-1.5 bg-white border rounded text-sm hover:bg-gray-100 disabled:opacity-50">التالي →</button>
             </div>
         </div>
 
     </main>
 
     <script>
-        // 👇 رابط السيرفر 👇
         const BASE_URL = 'https://nagm.onrender.com/api/v1/stats';
         
         let currentState = {
@@ -155,7 +156,7 @@
 
         async function fetchMatches() {
             const tbody = document.getElementById('matches-table-body');
-            tbody.innerHTML = '<tr><td colspan="6" class="p-10 text-center"><div class="loader-dots inline-flex gap-1"><div class="w-2 h-2 bg-blue-600 rounded-full"></div><div class="w-2 h-2 bg-blue-600 rounded-full" style="animation-delay:0.2s"></div><div class="w-2 h-2 bg-blue-600 rounded-full" style="animation-delay:0.4s"></div></div></td></tr>';
+            tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center"><div class="loader-dots inline-flex gap-1"><div class="w-1.5 h-1.5 bg-blue-600 rounded-full"></div><div class="w-1.5 h-1.5 bg-blue-600 rounded-full" style="animation-delay:0.2s"></div><div class="w-1.5 h-1.5 bg-blue-600 rounded-full" style="animation-delay:0.4s"></div></div></td></tr>';
 
             try {
                 let url = `${BASE_URL}/matches?page=${currentState.page}&limit=${currentState.limit}`;
@@ -169,13 +170,12 @@
                 tbody.innerHTML = ''; 
 
                 if (!json.data || json.data.length === 0) {
-                    tbody.innerHTML = '<tr><td colspan="6" class="p-10 text-center text-gray-400 font-bold">لا توجد مباريات في هذه الفترة</td></tr>';
+                    tbody.innerHTML = '<tr><td colspan="6" class="p-8 text-center text-gray-400 text-sm font-medium">لا توجد مباريات في هذه الفترة</td></tr>';
                     updatePagination(0, 0, 0);
                     return;
                 }
 
                 json.data.forEach(m => {
-                    // معالجة التاريخ
                     const dateObj = new Date(m.time);
                     const dateStr = dateObj.toLocaleDateString('en-GB'); 
                     const timeStr = dateObj.toLocaleTimeString('en-US', { hour: '2-digit', minute: '2-digit', hour12: true });
@@ -185,11 +185,11 @@
                     const scoreClass = isPlayed ? 'score-display' : 'score-null';
 
                     let winnersHtml = '<span class="text-gray-300 text-xs en-text">--</span>';
-                    let countBadge = '<span class="bg-gray-100 text-gray-400 px-2 py-1 rounded text-xs font-bold en-text">0</span>';
+                    let countBadge = '<span class="bg-gray-100 text-gray-400 px-2 py-0.5 rounded text-xs font-medium en-text">0</span>';
 
                     if (isPlayed) {
                         if (m.winnersCount > 0) {
-                            countBadge = `<span class="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-bold en-text border border-green-200 shadow-sm">${m.winnersCount}</span>`;
+                            countBadge = `<span class="bg-green-100 text-green-700 px-2.5 py-0.5 rounded-full text-xs font-bold en-text border border-green-200">${m.winnersCount}</span>`;
                             winnersHtml = `
                                 <details>
                                     <summary>👥 عرض الأسماء</summary>
@@ -200,20 +200,19 @@
                                 </details>
                             `;
                         } else {
-                            countBadge = `<span class="bg-red-100 text-red-600 px-2 py-1 rounded text-xs font-bold en-text">0</span>`;
-                            winnersHtml = '<span class="text-red-500 text-xs font-bold">لا أحد</span>';
+                            countBadge = `<span class="bg-red-100 text-red-600 px-2 py-0.5 rounded text-xs font-bold en-text">0</span>`;
+                            winnersHtml = '<span class="text-red-400 text-xs font-medium">لا أحد</span>';
                         }
                     }
 
-                    // الترتيب المعكوس (B يمين - A يسار)
                     const row = `
-                        <tr class="transition duration-150">
-                            <td class="font-bold text-gray-500 text-xs">${m.league}</td>
+                        <tr class="transition duration-150 hover:bg-gray-50">
+                            <td class="font-medium text-gray-500 text-xs">${m.league}</td>
                             
                             <td>
-                                <div class="flex items-center gap-3 font-bold text-gray-800 text-base">
+                                <div class="flex items-center gap-3 font-medium text-gray-700 text-sm">
                                     <span class="text-right w-1/2 truncate">${m.teamB}</span>
-                                    <span class="text-gray-300 text-xs font-normal px-1">VS</span>
+                                    <span class="text-gray-400 text-xs font-normal px-1">VS</span>
                                     <span class="text-left w-1/2 truncate">${m.teamA}</span>
                                 </div>
                             </td>
@@ -232,8 +231,8 @@
 
                             <td class="text-center">
                                 <div class="flex flex-col items-center">
-                                    <span class="en-text font-bold text-sm text-gray-700">${dateStr}</span>
-                                    <span class="en-text text-xs text-gray-400">${timeStr}</span>
+                                    <span class="en-text font-medium text-xs text-gray-600">${dateStr}</span>
+                                    <span class="en-text text-[10px] text-gray-400">${timeStr}</span>
                                 </div>
                             </td>
                         </tr>
@@ -245,7 +244,7 @@
 
             } catch (err) {
                 console.error(err);
-                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-red-600 font-bold">حدث خطأ في الاتصال</td></tr>`;
+                tbody.innerHTML = `<tr><td colspan="6" class="p-8 text-center text-red-500 text-sm font-medium">حدث خطأ في الاتصال</td></tr>`;
             }
         }
 
