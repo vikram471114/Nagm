@@ -4,144 +4,304 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>لوحة الإحصائيات المتقدمة</title>
-    <!-- تحميل Tailwind CSS -->
+    
     <script src="https://cdn.tailwindcss.com"></script>
+    
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Cairo:wght@300;400;600;700;800&display=swap" rel="stylesheet">
+
     <style>
-        /* إضافة خط Inter الافتراضي لـ Tailwind */
-        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
         body {
-            font-family: 'Inter', sans-serif;
-            background-color: #f3f4f6; /* خلفية رمادية فاتحة */
+            font-family: 'Cairo', sans-serif;
+            background-color: #f8fafc; /* Slate-50 */
+            color: #1e293b; /* Slate-800 */
         }
-        /* تصميم مخصص للبطاقات */
+
+        /* تأثير الزجاج (Glassmorphism) للهيدر */
+        .glass-header {
+            background: rgba(255, 255, 255, 0.95);
+            backdrop-filter: blur(10px);
+            border-bottom: 1px solid #e2e8f0;
+        }
+
+        /* تحسينات البطاقات */
         .stat-card {
-            background-color: white;
-            padding: 1.5rem;
-            border-radius: 0.5rem;
-            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -2px rgba(0, 0, 0, 0.1);
-            transition: all 0.3s ease-out;
+            background: white;
+            border-radius: 1rem;
+            border: 1px solid #f1f5f9;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.05), 0 2px 4px -1px rgba(0, 0, 0, 0.03);
+            transition: transform 0.2s ease, box-shadow 0.2s ease;
+            overflow: hidden;
+            display: flex;
+            flex-direction: column;
         }
-        .stat-card h2 {
-            font-size: 0.875rem; /* 14px */
-            font-weight: 600;
-            color: #4b5563; /* text-gray-600 */
-            text-transform: uppercase;
-            letter-spacing: 0.05em;
+
+        .stat-card:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.08), 0 4px 6px -2px rgba(0, 0, 0, 0.04);
+            border-color: #cbd5e1;
         }
-        .stat-card ul {
-            margin-top: 0.5rem;
-            list-style: none;
-            padding-left: 0;
+
+        /* رأس البطاقة */
+        .card-header {
+            padding: 1.25rem;
+            border-bottom: 1px solid #f1f5f9;
+            background-color: #fcfcfc;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
         }
-        .stat-card li {
-            font-size: 1.125rem; /* 18px */
+
+        .card-header h2 {
+            font-size: 1rem;
             font-weight: 700;
-            color: #1d4ed8; /* text-blue-700 */
+            color: #334155;
+        }
+
+        .card-icon {
+            width: 32px;
+            height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.1rem;
+        }
+
+        /* قائمة المتصدرين */
+        .ranking-list {
+            padding: 0;
+            margin: 0;
+            list-style: none;
+        }
+
+        .ranking-item {
+            padding: 1rem 1.25rem;
             display: flex;
             justify-content: space-between;
-            padding: 0.25rem 0;
-            border-bottom: 1px solid #e5e7eb; /* text-gray-200 */
+            align-items: center;
+            border-bottom: 1px solid #f8fafc;
+            transition: background-color 0.15s;
         }
-        .stat-card li:last-child {
+
+        .ranking-item:last-child {
             border-bottom: none;
         }
-        .stat-card li .points {
-            font-weight: 500;
-            color: #374151; /* text-gray-700 */
-            font-size: 1rem; /* 16px */
+
+        .ranking-item:hover {
+            background-color: #f8fafc;
         }
-        
-        /* تصميم البطاقات الرقمية */
-        .digital-card {
-            background-color: #3b82f6; /* bg-blue-600 */
-            color: white;
+
+        .ranking-name {
+            font-weight: 600;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
         }
-        .digital-card .value {
-            font-size: 2.25rem; /* 36px */
+
+        .ranking-badge {
+            width: 24px;
+            height: 24px;
+            background-color: #e2e8f0;
+            color: #64748b;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 0.75rem;
             font-weight: 700;
         }
-        .digital-card .title {
-            font-size: 1rem; /* 16px */
-            color: #dbeafe; /* text-blue-100 */
+
+        /* تمييز الأول */
+        .ranking-item:first-child .ranking-badge {
+            background-color: #fef3c7;
+            color: #d97706;
         }
 
-        /* إخفاء مؤشر التحميل */
-        #loader.hidden { display: none; }
-        #error-message.hidden { display: none; }
+        .ranking-value {
+            font-weight: 700;
+            color: #2563eb;
+            background-color: #eff6ff;
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+        }
+
+        /* البطاقات الرقمية الكبيرة */
+        .summary-card {
+            position: relative;
+            overflow: hidden;
+            border: none;
+            color: white;
+        }
+        
+        .summary-card.blue { background: linear-gradient(135deg, #3b82f6 0%, #2563eb 100%); }
+        .summary-card.purple { background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%); }
+        .summary-card.emerald { background: linear-gradient(135deg, #10b981 0%, #059669 100%); }
+
+        .summary-overlay {
+            position: absolute;
+            top: -20px;
+            left: -20px;
+            opacity: 0.1;
+            font-size: 8rem;
+            transform: rotate(15deg);
+        }
+
+        /* تخصيص الفلاتر */
+        .filter-btn {
+            transition: all 0.2s;
+        }
+        .filter-btn.active {
+            background-color: #2563eb;
+            color: white;
+            border-color: #2563eb;
+        }
+        
+        /* التحميل */
+        .loader-dots div {
+            animation-timing-function: cubic-bezier(0, 1, 1, 0);
+        }
+        .loader-dots div:nth-child(1) { left: 8px; animation: loader-dots1 0.6s infinite; }
+        .loader-dots div:nth-child(2) { left: 8px; animation: loader-dots2 0.6s infinite; }
+        .loader-dots div:nth-child(3) { left: 32px; animation: loader-dots2 0.6s infinite; }
+        .loader-dots div:nth-child(4) { left: 56px; animation: loader-dots3 0.6s infinite; }
+        @keyframes loader-dots1 { 0% { transform: scale(0); } 100% { transform: scale(1); } }
+        @keyframes loader-dots3 { 0% { transform: scale(1); } 100% { transform: scale(0); } }
+        @keyframes loader-dots2 { 0% { transform: translate(0, 0); } 100% { transform: translate(24px, 0); } }
+
     </style>
 </head>
-<body class="p-4 md:p-8">
+<body class="min-h-screen flex flex-col">
 
-    <div class="max-w-7xl mx-auto">
-        <header class="mb-8">
-            <h1 class="text-3xl font-bold text-gray-900">لوحة الإحصائيات المتقدمة</h1>
-            <p id="period-label" class="text-lg text-gray-600">يتم الآن عرض: الأسبوع الحالي</p>
-        </header>
-
-        <!-- (جديد) قسم فلاتر التاريخ -->
-        <div class="bg-white p-4 rounded-lg shadow-md mb-8 flex flex-wrap items-center gap-4">
-            <span class="font-semibold">تصفية حسب:</span>
-            <button id="week-btn" class="px-4 py-2 bg-blue-600 text-white rounded-md hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2">الأسبوع الحالي</button>
-            <button id="today-btn" class="px-4 py-2 bg-gray-200 text-gray-700 rounded-md hover:bg-gray-300">اليوم فقط</button>
+    <header class="glass-header sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4 flex flex-col md:flex-row justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="w-10 h-10 bg-blue-600 rounded-lg flex items-center justify-center text-white text-xl">📊</div>
+                <div>
+                    <h1 class="text-xl font-bold text-slate-800">الإحصائيات المتقدمة</h1>
+                    <p id="period-label" class="text-sm text-slate-500 font-medium">جاري التحميل...</p>
+                </div>
+            </div>
             
-            <div class="flex items-center gap-2">
-                <input type="date" id="start-date" class="border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                <span class="text-gray-500">إلى</span>
-                <input type="date" id="end-date" class="border-gray-300 rounded-md shadow-sm focus:border-blue-500 focus:ring-blue-500">
-                <button id="filter-btn" class="px-4 py-2 bg-green-600 text-white rounded-md hover:bg-green-700">تطبيق</button>
+            <div class="flex flex-wrap items-center justify-center gap-2 bg-slate-100 p-1.5 rounded-xl border border-slate-200">
+                <button id="week-btn" class="filter-btn active px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm">الأسبوع</button>
+                <button id="today-btn" class="filter-btn px-4 py-2 rounded-lg text-sm font-bold text-slate-600 hover:bg-white hover:shadow-sm">اليوم</button>
+                
+                <div class="h-6 w-px bg-slate-300 mx-1"></div>
+                
+                <div class="flex items-center gap-2 px-2">
+                    <input type="date" id="start-date" class="bg-white border-0 rounded-md text-sm text-slate-600 px-2 py-1.5 focus:ring-2 focus:ring-blue-500 w-32">
+                    <span class="text-slate-400 text-sm">إلى</span>
+                    <input type="date" id="end-date" class="bg-white border-0 rounded-md text-sm text-slate-600 px-2 py-1.5 focus:ring-2 focus:ring-blue-500 w-32">
+                    <button id="filter-btn" class="bg-slate-800 text-white p-1.5 rounded-md hover:bg-slate-700 transition">
+                        <svg xmlns="http://www.w3.org/2000/svg" class="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                            <path fill-rule="evenodd" d="M8 4a4 4 0 100 8 4 4 0 000-8zM2 8a6 6 0 1110.89 3.476l4.817 4.817a1 1 0 01-1.414 1.414l-4.816-4.816A6 6 0 012 8z" clip-rule="evenodd" />
+                        </svg>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </header>
+
+    <main class="flex-grow max-w-7xl mx-auto w-full px-4 sm:px-6 lg:px-8 py-8">
+
+        <div id="loader" class="flex flex-col items-center justify-center py-20">
+            <div class="loader-dots relative w-20 h-5"><div></div><div></div><div></div><div></div></div>
+            <p class="mt-4 text-slate-500 font-medium animate-pulse">جاري جلب البيانات...</p>
+        </div>
+
+        <div id="error-message" class="hidden max-w-2xl mx-auto bg-red-50 border-r-4 border-red-500 p-4 rounded-lg shadow-sm mb-8">
+            <div class="flex">
+                <div class="flex-shrink-0 text-red-500">
+                    <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                    </svg>
+                </div>
+                <div class="mr-3">
+                    <h3 class="text-sm font-bold text-red-800">حدث خطأ أثناء الاتصال</h3>
+                    <p id="error-text" class="text-sm text-red-700 mt-1"></p>
+                </div>
             </div>
         </div>
 
-        <!-- مؤشر التحميل -->
-        <div id="loader" class="text-center py-10">
-            <div class="inline-block w-12 h-12 border-4 border-blue-500 border-t-transparent rounded-full animate-spin"></div>
-            <p class="mt-2 text-gray-600">جاري تحميل الإحصائيات...</p>
+        <div id="stats-container" class="hidden space-y-10">
+            
+            <section>
+                <h3 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <span class="w-1.5 h-6 bg-blue-600 rounded-full"></span>
+                    نظرة سريعة
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                    <div class="stat-card summary-card blue p-6">
+                        <div class="summary-overlay">👥</div>
+                        <div class="relative z-10">
+                            <p class="text-blue-100 font-medium mb-1">المشتركون النشطون (اليوم)</p>
+                            <h2 id="activeUsersToday" class="text-4xl font-extrabold tracking-tight">--</h2>
+                        </div>
+                    </div>
+                    <div class="stat-card summary-card purple p-6">
+                        <div class="summary-overlay">📅</div>
+                        <div class="relative z-10">
+                            <p class="text-purple-100 font-medium mb-1">المشتركون النشطون (أسبوعياً)</p>
+                            <h2 id="activeUsersWeek" class="text-4xl font-extrabold tracking-tight">--</h2>
+                        </div>
+                    </div>
+                    <div class="stat-card summary-card emerald p-6">
+                        <div class="summary-overlay">📈</div>
+                        <div class="relative z-10">
+                            <p class="text-emerald-100 font-medium mb-1">معدل النقاط اليومي</p>
+                            <h2 id="averagePointsToday" class="text-4xl font-extrabold tracking-tight">--</h2>
+                        </div>
+                    </div>
+                </div>
+            </section>
+
+            <section>
+                <h3 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <span class="w-1.5 h-6 bg-yellow-500 rounded-full"></span>
+                    أساطير هذه الفترة
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div id="starsOfPeriod" class="stat-card"></div>
+                    <div id="bigMatchHuntersByPoints" class="stat-card"></div>
+                    <div id="bigMatchHuntersByCount" class="stat-card"></div>
+                    <div id="highScorers" class="stat-card"></div>
+                    <div id="longestStreak" class="stat-card"></div>
+                    <div id="mostConsistent" class="stat-card"></div>
+                </div>
+            </section>
+
+            <section>
+                <h3 class="text-lg font-bold text-slate-700 mb-4 flex items-center gap-2">
+                    <span class="w-1.5 h-6 bg-rose-500 rounded-full"></span>
+                    ملوك الدوريات الكبرى
+                </h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+                    <div id="league-الدوري الإنجليزي" class="stat-card border-t-4 border-t-indigo-500"></div>
+                    <div id="league-الدوري الإسباني" class="stat-card border-t-4 border-t-orange-500"></div>
+                    <div id="league-دوري أبطال أوروبا" class="stat-card border-t-4 border-t-blue-800"></div>
+                    <div id="league-دوري روشن السعودي" class="stat-card border-t-4 border-t-green-600"></div>
+                    <div id="league-الدوري الإيطالي" class="stat-card border-t-4 border-t-sky-500"></div>
+                    <div id="league-الدوري الألماني" class="stat-card border-t-4 border-t-red-600"></div>
+                    <div id="league-الدوري الفرنسي" class="stat-card border-t-4 border-t-blue-400"></div>
+                </div>
+            </section>
+
         </div>
+    </main>
 
-        <!-- رسالة الخطأ -->
-        <div id="error-message" class="hidden bg-red-100 border border-red-400 text-red-700 px-4 py-3 rounded-lg relative" role="alert">
-            <strong class="font-bold">حدث خطأ!</strong>
-            <span id="error-text" class="block sm:inline">لا يمكن الاتصال بالخادم.</span>
+    <footer class="mt-auto py-6 border-t border-slate-200 bg-white">
+        <div class="max-w-7xl mx-auto px-4 text-center text-slate-500 text-sm">
+            <p>&copy; 2025 لوحة الإحصائيات الذكية. جميع الحقوق محفوظة.</p>
         </div>
-
-        <!-- حاوية الإحصائيات -->
-        <div id="stats-container" class="hidden">
-            <!-- القسم الأول: إحصائيات رقمية (ثابتة) -->
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4 mt-8">نظرة عامة</h2>
-            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
-                <div id="activeUsersToday" class="stat-card digital-card"></div>
-                <div id="activeUsersWeek" class="stat-card digital-card"></div>
-                <div id="averagePointsToday" class="stat-card digital-card"></div>
-            </div>
-
-            <!-- القسم الثاني: أبطال الفترة (ديناميكي) -->
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4 mt-8">أبطال الفترة المحددة</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                <div id="starsOfPeriod" class="stat-card"></div>
-                <div id="bigMatchHuntersByPoints" class="stat-card"></div>
-                <div id="bigMatchHuntersByCount" class="stat-card"></div>
-                <div id="highScorers" class="stat-card"></div>
-                <div id="longestStreak" class="stat-card"></div>
-                <div id="mostConsistent" class="stat-card"></div>
-            </div>
-
-            <!-- (جديد) القسم الثالث: نجوم الدوريات الكبرى -->
-            <h2 class="text-2xl font-semibold text-gray-800 mb-4 mt-8">نجوم الدوريات الكبرى (خلال الفترة)</h2>
-            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-                <div id="league-الدوري الإنجليزي" class="stat-card"></div>
-                <div id="league-الدوري الإسباني" class="stat-card"></div>
-                <div id="league-دوري أبطال أوروبا" class="stat-card"></div>
-                <div id="league-دوري روشن السعودي" class="stat-card"></div>
-                <div id="league-الدوري الإيطالي" class="stat-card"></div>
-                <div id="league-الدوري الألماني" class="stat-card"></div>
-                <div id="league-الدوري الفرنسي" class="stat-card"></div>
-            </div>
-        </div>
-    </div>
+    </footer>
 
     <script>
         // =======================
-        // الإعدادات
+        // الإعدادات والثوابت
         // =======================
         const API_BASE_URL = 'https://nagm.onrender.com/api/v1/stats';
         const LOADER = document.getElementById('loader');
@@ -150,17 +310,25 @@
         const STATS_CONTAINER = document.getElementById('stats-container');
         const PERIOD_LABEL = document.getElementById('period-label');
 
-        // أسماء الدوريات (يجب أن تطابق تماماً ما في الخادم)
         const LEAGUE_NAMES = [
             "الدوري الإنجليزي", "الدوري الإسباني", "دوري أبطال أوروبا", "دوري روشن السعودي",
             "الدوري الإيطالي", "الدوري الألماني", "الدوري الفرنسي"
         ];
 
+        // أيقونات العناوين
+        const CARD_ICONS = {
+            'starsOfPeriod': { icon: '⭐', bg: 'bg-yellow-100', text: 'text-yellow-600', title: 'نجم الفترة (الأعلى نقاطاً)' },
+            'bigMatchHuntersByPoints': { icon: '🎯', bg: 'bg-red-100', text: 'text-red-600', title: 'قناص القمم (بالنقاط)' },
+            'bigMatchHuntersByCount': { icon: '🔢', bg: 'bg-orange-100', text: 'text-orange-600', title: 'قناص القمم (بالعدد)' },
+            'highScorers': { icon: '🔥', bg: 'bg-purple-100', text: 'text-purple-600', title: 'أعلى نتيجة في مباراة' },
+            'longestStreak': { icon: '⚡', bg: 'bg-blue-100', text: 'text-blue-600', title: 'سلسلة انتصارات متتالية' },
+            'mostConsistent': { icon: '🛡️', bg: 'bg-emerald-100', text: 'text-emerald-600', title: 'الأكثر مشاركة' }
+        };
+
         // =======================
-        // وظائف مساعدة
+        // الوظائف المساعدة
         // =======================
 
-        // إظهار/إخفاء التحميل والخطأ
         const showLoader = () => {
             LOADER.classList.remove('hidden');
             STATS_CONTAINER.classList.add('hidden');
@@ -175,41 +343,67 @@
             ERROR_MSG.classList.remove('hidden');
         };
 
-        // (جديد) دالة لإنشاء بطاقات الأبطال (التي تقبل التعادل)
-        function renderStatList(elementId, title, items, unit) {
-            const card = document.getElementById(elementId);
-            if (!card) return;
-
-            let itemsHtml = '<ul>';
-            items.forEach(item => {
-                const value = item.points ?? item.correct ?? item.count ?? item.total;
-                itemsHtml += `
-                    <li>
-                        <span>${item.name}</span>
-                        <span class="points">${value} ${unit}</span>
-                    </li>
-                `;
+        // تحديث الأزرار النشطة
+        function setActiveButton(activeId) {
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                if (btn.id === activeId) {
+                    btn.classList.add('active', 'bg-blue-600', 'text-white', 'border-blue-600');
+                    btn.classList.remove('text-slate-600', 'hover:bg-white');
+                } else {
+                    btn.classList.remove('active', 'bg-blue-600', 'text-white', 'border-blue-600');
+                    btn.classList.add('text-slate-600', 'hover:bg-white');
+                }
             });
-            itemsHtml += '</ul>';
-
-            card.innerHTML = `<h2>${title}</h2> ${itemsHtml}`;
         }
 
-        // دالة لإنشاء البطاقات الرقمية
-        function renderDigitalCard(elementId, title, value, icon) {
+        // دالة عرض القوائم (البطاقات البيضاء)
+        function renderStatList(elementId, titleKey, items, unit) {
             const card = document.getElementById(elementId);
             if (!card) return;
+
+            // إعداد العنوان والأيقونة
+            let titleText = titleKey; // افتراضي للدوريات
+            let iconHtml = `<div class="card-icon bg-slate-100 text-slate-600">🏆</div>`;
+
+            // إذا كانت بطاقة إحصائية عامة
+            if (CARD_ICONS[elementId]) {
+                const info = CARD_ICONS[elementId];
+                titleText = info.title;
+                iconHtml = `<div class="card-icon ${info.bg} ${info.text}">${info.icon}</div>`;
+            }
+
+            // بناء القائمة
+            let listHtml = '';
+            if (!items || items.length === 0 || (items.length === 1 && items[0].name === 'لا يوجد')) {
+                listHtml = `<div class="p-6 text-center text-slate-400 text-sm">لا توجد بيانات متاحة</div>`;
+            } else {
+                listHtml = `<ul class="ranking-list">`;
+                items.forEach((item, index) => {
+                    const value = item.points ?? item.correct ?? item.count ?? item.total ?? 0;
+                    listHtml += `
+                        <li class="ranking-item">
+                            <div class="ranking-name">
+                                <span class="ranking-badge">${index + 1}</span>
+                                ${item.name}
+                            </div>
+                            <div class="ranking-value">${value} <span class="text-xs font-normal opacity-70">${unit}</span></div>
+                        </li>
+                    `;
+                });
+                listHtml += `</ul>`;
+            }
+
             card.innerHTML = `
-                <div class="flex items-center justify-between">
-                    <span class="title">${title}</span>
-                    <span class="text-3xl">${icon}</span>
+                <div class="card-header">
+                    ${iconHtml}
+                    <h2>${titleText}</h2>
                 </div>
-                <div class="value mt-2">${value}</div>
+                ${listHtml}
             `;
         }
 
         // =======================
-        // جلب وعرض البيانات
+        // جلب البيانات
         // =======================
         async function fetchStats(queryString = '') {
             showLoader();
@@ -225,59 +419,68 @@
                 STATS_CONTAINER.classList.remove('hidden');
             } catch (error) {
                 console.error('Error fetching stats:', error);
-                showError(`فشل الاتصال بالخادم: ${error.message}`);
+                showError(`تعذر تحميل البيانات: ${error.message}`);
             }
         }
 
         function renderData(stats) {
-            // تحديث عنوان الفترة
-            PERIOD_LABEL.textContent = `يتم الآن عرض: ${stats.period}`;
+            PERIOD_LABEL.textContent = `الفترة الحالية: ${stats.period}`;
 
-            // 1. عرض الإحصائيات الرقمية الثابتة
-            renderDigitalCard('activeUsersToday', 'مشترك نشط اليوم', stats.activeUsersToday, '👥');
-            renderDigitalCard('activeUsersWeek', 'مشترك نشط هذا الأسبوع', stats.activeUsersWeek, '🗓️');
-            renderDigitalCard('averagePointsToday', 'معدل النقاط اليومي', stats.averagePointsToday, '📊');
+            // 1. البطاقات الرقمية
+            // استخدام تأثير العد الرقمي البسيط
+            document.getElementById('activeUsersToday').textContent = stats.activeUsersToday;
+            document.getElementById('activeUsersWeek').textContent = stats.activeUsersWeek;
+            document.getElementById('averagePointsToday').textContent = stats.averagePointsToday;
 
-            // 2. عرض إحصائيات الفترة (تدعم التعادل)
-            renderStatList('starsOfPeriod', 'نجم الفترة', stats.starsOfPeriod, 'نقطة');
-            renderStatList('bigMatchHuntersByPoints', 'قناص المباريات الكبرى (نقاط)', stats.bigMatchHuntersByPoints, 'نقطة');
-            renderStatList('bigMatchHuntersByCount', 'قناص المباريات الكبرى (عدد)', stats.bigMatchHuntersByCount, 'مباراة');
-            renderStatList('highScorers', 'أعلى نقاط من مباراة واحدة', stats.highScorers, 'نقطة');
-            renderStatList('longestStreak', 'ملك السلاسل (توقع صحيح)', stats.longestStreak, 'توقع');
-            renderStatList('mostConsistent', 'الأكثر استمرارية (إجمالي)', stats.mostConsistent, 'توقع');
+            // 2. بطاقات الإحصائيات
+            renderStatList('starsOfPeriod', 'starsOfPeriod', stats.starsOfPeriod, 'نقطة');
+            renderStatList('bigMatchHuntersByPoints', 'bigMatchHuntersByPoints', stats.bigMatchHuntersByPoints, 'نقطة');
+            renderStatList('bigMatchHuntersByCount', 'bigMatchHuntersByCount', stats.bigMatchHuntersByCount, 'مباراة');
+            renderStatList('highScorers', 'highScorers', stats.highScorers, 'نقطة');
+            renderStatList('longestStreak', 'longestStreak', stats.longestStreak, 'توقع');
+            renderStatList('mostConsistent', 'mostConsistent', stats.mostConsistent, 'توقع');
 
-            // 3. عرض نجوم الدوريات الكبرى
+            // 3. بطاقات الدوريات
             LEAGUE_NAMES.forEach(leagueName => {
                 const elementId = `league-${leagueName}`;
-                const winners = stats.leagueStars[leagueName] || [{ name: 'لا يوجد', points: 0 }];
+                const winners = stats.leagueStars[leagueName] || [];
                 renderStatList(elementId, leagueName, winners, 'نقطة');
             });
         }
 
         // =======================
-        // ربط الأحداث
+        // تهيئة الصفحة
         // =======================
         document.addEventListener('DOMContentLoaded', () => {
-            // جلب بيانات الأسبوع الحالي عند التحميل
-            fetchStats('');
+            fetchStats(''); // افتراضي: الأسبوع
+            setActiveButton('week-btn');
 
-            // زر "اليوم"
             document.getElementById('today-btn').addEventListener('click', () => {
                 fetchStats('?period=today');
+                setActiveButton('today-btn');
+                // مسح تواريخ الادخال
+                document.getElementById('start-date').value = '';
+                document.getElementById('end-date').value = '';
             });
 
-            // زر "الأسبوع الحالي"
             document.getElementById('week-btn').addEventListener('click', () => {
-                fetchStats(''); // الافتراضي هو الأسبوع
+                fetchStats('');
+                setActiveButton('week-btn');
+                document.getElementById('start-date').value = '';
+                document.getElementById('end-date').value = '';
             });
 
-            // زر "تطبيق" للتواريخ المخصصة
             document.getElementById('filter-btn').addEventListener('click', () => {
                 const startDate = document.getElementById('start-date').value;
                 const endDate = document.getElementById('end-date').value;
 
                 if (startDate && endDate) {
                     fetchStats(`?startDate=${startDate}&endDate=${endDate}`);
+                    // إزالة النشاط من الأزرار الأخرى
+                    document.querySelectorAll('.filter-btn').forEach(btn => {
+                        btn.classList.remove('active', 'bg-blue-600', 'text-white', 'border-blue-600');
+                        btn.classList.add('text-slate-600', 'hover:bg-white');
+                    });
                 } else {
                     alert('الرجاء اختيار تاريخ بداية ونهاية.');
                 }
