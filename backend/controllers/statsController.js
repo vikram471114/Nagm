@@ -381,57 +381,85 @@ exports.getAllStats = catchAsync(async (req, res, next) => {
 // =======================
 // 👇👇👇 الجديد: تقرير المباريات والعباقرة 👇👇👇
 // =======================
+// =======================
+// 👇👇👇 دالة تقرير المباريات (المحسنة) 👇👇👇
+// =======================
 exports.getMatchesStats = catchAsync(async (req, res, next) => {
-    const { date, filter } = req.query; // نستقبل التاريخ والفلتر من الرابط
+    // استقبال الباراميترات الجديدة (page, limit, startDate, endDate)
+    const page = req.query.page * 1 || 1;
+    const limit = req.query.limit * 1 || 50;
+    const skip = (page - 1) * limit;
+    
+    const { startDate, endDate, filter } = req.query;
 
-    // 1. إعداد فلتر التاريخ
+    // 1. إعداد فلتر البحث
     let matchQuery = {};
     
-    if (date) {
-        const queryDate = new Date(date);
-        const startOfDay = new Date(queryDate.setHours(0, 0, 0, 0));
-        const endOfDay = new Date(queryDate.setHours(23, 59, 59, 999));
-        matchQuery.matchDateTime = { $gte: startOfDay, $lte: endOfDay };
-    } else if (filter === 'finished') {
+    // فلترة التاريخ (نطاق زمني)
+    if (startDate && endDate) {
+        // نضبط الوقت ليشمل اليوم بالكامل (من 00:00 إلى 23:59)
+        const start = new Date(startDate);
+        start.setHours(0, 0, 0, 0);
+        
+        const end = new Date(endDate);
+        end.setHours(23, 59, 59, 999);
+        
+        matchQuery.matchDateTime = { $gte: start, $lte: end };
+    } 
+    // الفلترة حسب الحالة
+    if (filter === 'finished') {
         matchQuery.status = 'Finished';
     } else if (filter === 'scheduled') {
         matchQuery.status = 'Scheduled';
     }
 
-    // 2. جلب المباريات المطلوبة
+    // 2. جلب إجمالي العدد (للحساب الصفحات)
+    const totalMatches = await Match.countDocuments(matchQuery);
+
+    // 3. جلب المباريات (مع Pagination)
     const matches = await Match.find(matchQuery)
         .populate('teamA', 'name logo')
         .populate('teamB', 'name logo')
         .populate('leagueId', 'name')
         .sort({ matchDateTime: -1 }) // الأحدث أولاً
+        .skip(skip)
+        .limit(limit)
         .lean();
 
-    // 3. جلب التوقعات والمشتركين دفعة واحدة (لتحسين الأداء)
+    // 4. جلب التوقعات والمشتركين
     const matchIds = matches.map(m => m._id);
     const allPredictions = await Prediction.find({ matchId: { $in: matchIds } }).lean();
-    const allParticipants = await Participant.find().select('userId fullName name').lean();
+    
+    // تحسين الأداء: جلب فقط المشتركين الذين لديهم توقعات لهذه المباريات
+    const userIds = [...new Set(allPredictions.map(p => p.userId))]; 
+    const allParticipants = await Participant.find({ userId: { $in: userIds } })
+        .select('userId fullName name')
+        .lean();
 
-    // 4. عملية "الطحن" والمقارنة
+    // تحويل المشاركين إلى Map لسرعة البحث (O(1)) بدلاً من Find كل مرة
+    const participantsMap = {};
+    allParticipants.forEach(p => {
+        participantsMap[p.userId.toString()] = p.fullName || p.name || 'مجهول';
+    });
+
+    // 5. معالجة البيانات
     const reportData = matches.map(match => {
-        // أ. تحديد نتيجة المباراة (إذا لم تبدأ نضع "-")
-        const scoreA = (match.scoreA !== undefined && match.scoreA !== null) ? match.scoreA : null;
-        const scoreB = (match.scoreB !== undefined && match.scoreB !== null) ? match.scoreB : null;
+        const scoreA = (match.scoreA !== undefined && match.scoreA !== null) ? Number(match.scoreA) : null;
+        const scoreB = (match.scoreB !== undefined && match.scoreB !== null) ? Number(match.scoreB) : null;
         
-        // ب. البحث عن التوقعات الصحيحة لهذه المباراة
         let correctPredictorsNames = [];
         
         if (scoreA !== null && scoreB !== null) {
-            // نفلتر التوقعات المطابقة للنتيجة
+            // نفلتر التوقعات الصحيحة (مع التأكد من تحويل الأنواع)
             const correctPreds = allPredictions.filter(p => 
                 p.matchId.toString() === match._id.toString() &&
-                Number(p.scoreA) === Number(scoreA) &&
-                Number(p.scoreB) === Number(scoreB)
+                Number(p.predictedScoreA || p.scoreA) === scoreA &&  // يدعم التسميتين
+                Number(p.predictedScoreB || p.scoreB) === scoreB
             );
 
-            // نجلب أسماء أصحاب التوقعات الصحيحة
+            // استخراج الأسماء
             correctPredictorsNames = correctPreds.map(pred => {
-                const participant = allParticipants.find(p => p.userId.toString() === pred.userId.toString());
-                return participant ? (participant.fullName || participant.name) : 'مجهول';
+                return participantsMap[pred.userId.toString()] || 'مجهول';
             });
         }
 
@@ -444,14 +472,18 @@ exports.getMatchesStats = catchAsync(async (req, res, next) => {
             teamB: match.teamB ? match.teamB.name : 'فريق B',
             resultFormatted: (scoreA !== null) ? `${scoreA} - ${scoreB}` : " - ",
             winnersCount: correctPredictorsNames.length,
-            winnersList: correctPredictorsNames // قائمة الأسماء
+            winnersList: correctPredictorsNames
         };
     });
 
-    // 5. إرسال النتيجة
+    // 6. إرسال الرد مع معلومات الصفحات
     res.status(200).json({
         status: 'success',
         results: reportData.length,
+        total: totalMatches,
+        currentPage: page,
+        totalPages: Math.ceil(totalMatches / limit),
         data: reportData
     });
 });
+
